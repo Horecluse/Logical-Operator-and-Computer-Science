@@ -1,0 +1,90 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <string>
+#include <iostream>
+#include <sstream>
+
+using namespace std;
+
+struct Watermark {
+    string content;
+    int num;
+};
+
+void addWatermarksToLine(string& line, const vector<Watermark>& watermarks) {
+    // Add watermarks at the beginning of the line
+    for (const auto& wm : watermarks) {
+        for (int i = 0; i < wm.num; ++i) {
+            line.insert(0, " /* " + wm.content + " */");
+        }
+    }
+
+    // Add watermarks at the end of the line
+    for (const auto& wm : watermarks) {
+        for (int i = 0; i < wm.num; ++i) {
+            line.append(" /* " + wm.content + " */");
+        }
+    }
+
+    // Add watermarks in the middle of the line
+    stringstream ss(line);
+    string word;
+    string newLine;
+    while (ss >> word) {
+        newLine += word + " ";
+        for (const auto& wm : watermarks) {
+            for (int i = 0; i < wm.num; ++i) {
+                newLine += "/* " + wm.content + " */ ";
+            }
+        }
+    }
+    line = newLine;
+}
+
+int main() {
+    vector<string> originalCodes;
+    vector<Watermark> watermarks;
+    char buffer[1000];
+
+    // Step 1: Read the original codes
+    cout << "Please input your original codes below (end with STOP*):" << endl;
+    while (true) {
+        cin.getline(buffer, 1000);
+        if (strcmp(buffer, "STOP*") == 0) break;
+        originalCodes.push_back(string(buffer));
+    }
+
+    // Clear the screen (platform-specific)
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+
+    // Step 2: Read the watermarks
+    cout << "Please input your watermarks and the number of repetitions (end with STOP*):" << endl;
+    while (true) {
+        Watermark wm;
+        cin.getline(buffer, 1000);
+        if (strcmp(buffer, "STOP*") == 0) break;
+        wm.content = string(buffer);
+        cout << "Number of repetitions for this watermark: ";
+        cin >> wm.num;
+        cin.ignore(); // Ignore the newline after the number
+        watermarks.push_back(wm);
+    }
+
+    // Step 3: Add watermarks to the original codes
+    for (auto& codeLine : originalCodes) {
+        addWatermarksToLine(codeLine, watermarks);
+    }
+
+    // Step 4: Output the watermarked codes
+    cout << "Your watermarked code:" << endl;
+    for (const auto& codeLine : originalCodes) {
+        cout << codeLine << endl;
+    }
+
+    return 0;
+}
