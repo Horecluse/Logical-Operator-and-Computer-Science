@@ -1,0 +1,77 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <regex>
+
+using namespace std;
+
+struct Watermark {
+    string content;
+};
+
+bool isUsefulComment(const string& line) {
+    // Check if a line is a useful comment
+    return line.find("/*") != string::npos && line.find("*/") != string::npos;
+}
+
+void removeWatermarksFromLine(string& line, const vector<Watermark>& watermarks) {
+    // Remove watermarks from a line
+    for (const auto& wm : watermarks) {
+        string watermark = "/* " + wm.content + " */";
+        size_t pos;
+        while ((pos = line.find(watermark)) != string::npos) {
+            line.erase(pos, watermark.length());
+        }
+    }
+}
+
+int main() {
+    vector<Watermark> watermarks;
+    char buffer[1000];
+
+    // Read watermarks to be removed
+    cout << "Please input the watermarks to be removed (end with STOP*):" << endl;
+    while (true) {
+        Watermark wm;
+        cin.getline(buffer, 1000);
+        if (strcmp(buffer, "STOP*") == 0) break;
+        wm.content = string(buffer);
+        watermarks.push_back(wm);
+    }
+
+    ifstream inFile("input_code.cpp");
+    ofstream outFile("output_code.cpp");
+    if (!inFile) {
+        cerr << "Error: Unable to open input file." << endl;
+        return 1;
+    }
+    if (!outFile) {
+        cerr << "Error: Unable to open output file." << endl;
+        return 1;
+    }
+
+    string line;
+    bool inComment = false;
+    while (getline(inFile, line)) {
+        if (line.find("/*") != string::npos) inComment = true;
+        if (line.find("*/") != string::npos) inComment = false;
+
+        if (inComment || isUsefulComment(line)) {
+            // Preserve useful comments
+            outFile << line << endl;
+        } else {
+            // Remove watermarks
+            removeWatermarksFromLine(line, watermarks);
+            outFile << line << endl;
+        }
+    }
+
+    inFile.close();
+    outFile.close();
+
+    cout << "Watermarks have been removed successfully." << endl;
+
+    return 0;
+}
